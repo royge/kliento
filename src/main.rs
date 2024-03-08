@@ -1,6 +1,11 @@
 use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
-use kliento::{
-    extract_valid_bill_info_from, get_upload_summary, login, upload_bill_info, Credentials,
+use kliento::auth::{login, Credentials};
+use kliento::bills::{
+    extract_valid_bills_from,
+    get_upload_summary,
+    upload_bills,
+    Callbacks,
+    Config as KlientoConfig,
 };
 use std::env::var;
 
@@ -13,11 +18,11 @@ fn main() {
 
     // 2. Source of data to be uploaded.
     let sheet = get_excel_worksheet(&config.source);
-    let bill_info = extract_valid_bill_info_from(sheet);
+    let bills = extract_valid_bills_from(sheet);
 
-    println!("Found {} valid bill info.", bill_info.len());
+    println!("Found {} valid bill info.", bills.len());
 
-    if bill_info.is_empty() {
+    if bills.is_empty() {
         println!("No valid bill info found.");
         return;
     }
@@ -38,14 +43,14 @@ fn main() {
     };
 
     // 4. Upload the valid bill info to the server (i.e. Blaggo API).
-    let result = upload_bill_info(
-        bill_info,
-        &kliento::Config {
+    let result = upload_bills(
+        bills,
+        &KlientoConfig {
             url: config.upload_url,
             token,
             batch_size: 500,
             timeout: 60,
-            callbacks: kliento::Callbacks {
+            callbacks: Callbacks {
                 on_upload: on_upload,
                 on_error: |error| println!("Error uploading bill info: {}", error),
                 on_success: || println!("✔"),

@@ -1,16 +1,26 @@
 use calamine::{open_workbook, Reader, Xlsx};
-use kliento::{extract_valid_bill_info_from, login, upload_bill_info, Credentials};
+use kliento::bills::{
+    extract_valid_bills_from,
+    upload_bills,
+    Bill,
+    Config,
+    Callbacks,
+};
+use kliento::auth::{
+    login,
+    Credentials,
+};
 use std::env::var;
 
 #[test]
-fn test_extract_valid_bill_info_from() {
+fn test_extract_valid_bills_from() {
     let mut excel: Xlsx<_> = open_workbook("test.xlsx").unwrap();
     let sheet = excel.worksheet_range("Sheet1").unwrap();
 
-    let bill_info = extract_valid_bill_info_from(sheet);
+    let bills = extract_valid_bills_from(sheet);
 
     // NOTE: Check the test.xlsx file for the expected values.
-    assert_eq!(bill_info.len(), 4);
+    assert_eq!(bills.len(), 4);
 }
 
 #[test]
@@ -31,21 +41,21 @@ fn test_login() {
 }
 
 #[test]
-fn test_upload_bill_info() {
-    let bill_info = vec![
-        kliento::BillInfo {
+fn test_upload_bills() {
+    let bills = vec![
+        Bill {
             account_number: "123456789".to_string(),
             amount: 153.45,
             due_date: "28-02-2024".to_string(),
             period: "02-2024".to_string(),
         },
-        kliento::BillInfo {
+        Bill {
             account_number: "987654321".to_string(),
             amount: 513.21,
             due_date: "24-03-2024".to_string(),
             period: "03-2024".to_string(),
         },
-        kliento::BillInfo {
+        Bill {
             account_number: "887654321".to_string(),
             amount: 513.21,
             due_date: "22-01-2024".to_string(),
@@ -67,14 +77,14 @@ fn test_upload_bill_info() {
         },
     );
 
-    let result = upload_bill_info(
-        bill_info,
-        &kliento::Config {
+    let result = upload_bills(
+        bills,
+        &Config {
             url: upload_url.to_string(),
             token,
             batch_size: 500,
             timeout: 60,
-            callbacks: kliento::Callbacks {
+            callbacks: Callbacks {
                 on_upload: |_total_size, _batch_size, _iteration| println!("Uploading bill info."),
                 on_error: |error| println!("Error uploading bill info: {}", error),
                 on_success: || println!("Successfully uploaded bill info."),
