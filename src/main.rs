@@ -1,7 +1,7 @@
 use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
 use kliento::auth::{login, Credentials};
-use kliento::bills::{
-    extract_valid_bills_from,
+use kliento::bills::{extract_valid_bills_from};
+use kliento::client::{
     get_upload_summary,
     upload_bills,
     Callbacks,
